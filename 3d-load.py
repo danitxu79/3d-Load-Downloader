@@ -46,12 +46,18 @@ from urllib.parse import urlparse
 from subprocess import call
 import configparser
 
+configuracion = configparser.ConfigParser()
+terminamos = 0
+
 
 def sleeper(tiempo):
+    
     time.sleep(tiempo)
 
 
 def carga_configuracion():
+    
+    global configuracion
     if os.path.isfile('3d-load.cfg'):
         print('Existe archivo de configuración.')
         configuracion = configparser.ConfigParser()
@@ -68,11 +74,22 @@ def carga_configuracion():
     else:
         print('No existe archivo de configuración')
         file = open("3d-load.cfg", "w")
-        file.write("Configuracion de 3D-Load \n" + os.linesep)
+        file.write("configuracion de 3D-Load \n" + os.linesep)
         file.close()
 
+    if os.path.exists("download"):
+        pass
+    else:
+        os.mkdir("download")
+    if os.path.exists("extract"):
+        pass
+    else:
+        os.mkdir("extract")
+        
 
 def pre_carga():
+    
+    global configuracion
     print('\n\n Cargando la configuración de 3d-load \n\n')
     
     if os.path.isfile('3d-load.cfg'):
@@ -82,7 +99,7 @@ def pre_carga():
     else:
         print(' No existe archivo de configuración')
         file = open("3d-load.cfg", "w")
-        file.write("[Configuracion de 3D-Load]\n\n" + os.linesep)
+        file.write("[configuracion de 3D-Load]\n\n" + os.linesep)
         file.close()
     
     if os.path.isfile('listado.ini'):
@@ -96,11 +113,11 @@ def pre_carga():
         file.write("[Listado de archivos descargados]\n\n" + os.linesep)
         file.close()
     
-    pass
-
-
+    
 def carga(page):
     
+    global configuracion
+    global terminamos
     browser = webdriver.Chrome()
     browser2 = webdriver.Chrome()
     
@@ -150,24 +167,11 @@ def carga(page):
             #            print(file_name)
             #            print(file_id)
             
-            # abre archivo (y cierra cuando termine lectura)
-            #            with open("listado.ini") as listado:
-            #                # recorre línea a línea el archivo
-            #                for linea in listado:
-            #                    # muestra línea última leída
-            #                    if linea == file_name:
-            #                        print(" \n Descargando fichero: " + file_name + '\n')
-            #                        os.system('mega-get --ignore-quota-warn ' + file_id + ' ./download/' + file_name)
-            #                        listado2 = open ("listado2.ini",  mode="w", encoding="utf-8")
-            #                        listado2.write(file_name + '\n' )
-            #                        listado2.close()
-            #                    else: print('ya descargado antes')
-            
             listado = open('listado.ini', 'r')
             lista = listado.readlines()
             listado.close()
-            print(lista)
-            print(file_name)
+            # print(lista)
+            # print(file_name)
             if file_name + '\n' not in lista:
                 print(" \n Descargando fichero: " + file_name + '\n')
                 os.system('mega-get --ignore-quota-warn ' + file_id + ' ./download/' + file_name)
@@ -185,22 +189,26 @@ def carga(page):
                     print(e)
                 else:
                     print("File is deleted successfully")
-                
+                with open('3d-load.cfg', 'w') as archivoconfig:
+                    configuracion.write(archivoconfig)
                 listado = open("listado.ini", mode="a", encoding="utf-8")
                 listado.write(file_name + '\n')
                 listado.close()
             else:
                 print('si está')
+                ultconf = configuracion['Ult.Descargado']['ult.descargado']
+                if ultconf == file_name:
+                    terminamos = 1
+                    break
     browser.close()
     browser2.close()
-    pass
-
+    
 
 def main(args):
     pre_carga()
     carga_configuracion()
     page = 0
-    while page < 100:
+    while terminamos == 0:
         carga(page)
         page = page + 1
     
