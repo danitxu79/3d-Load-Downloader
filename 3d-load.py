@@ -45,6 +45,7 @@ from unshortenit import UnshortenIt
 from urllib.parse import urlparse
 from subprocess import call
 import configparser
+import gdown
 
 configuracion = configparser.ConfigParser()
 terminamos = 0
@@ -133,78 +134,84 @@ def carga(page):
         browser2.get(links)
         # browser2.minimize_window()
         # browser.minimize_window()
-        for b in browser2.find_elements_by_class_name('shortcode.button.red.large'):
-            alinks = b.get_attribute('href')
-            # print(alinks + '\n')
-            unshortener = UnshortenIt()
-            uri = unshortener.unshorten(alinks)
-            print(uri + '\n')
-            igual = uri.find("=")
-            total = len(uri)
-            file_id = uri[igual + 1:total]
-            #            print("Descargando: ", file_id +'\n\n')
-            o = urlparse(links)
-            #                print(o)
-            #                print (o.path)
-            oPath = o.path
-            #            print("len")
-            #            print(len(oPath))
-            
-            oPath = oPath[:len(oPath) - 1]
-            #            print(oPath)
-            a = 0
-            while a != -1:
-                a = oPath.find("/")
-                oPath = oPath[a + 1:len(oPath)]
-                ocat = o.path[1:len(o.path)]
-            # print(ocat)
-            a = ocat.find("/")
-            #            print(a)
-            file_name = ocat[a + 1:len(ocat) - 1]
-            ocat = ocat[0:a]
-            
-            #            print(ocat)
-            #            print(file_name)
-            #            print(file_id)
-            
-            listado = open('listado.ini', 'r')
-            lista = listado.readlines()
-            listado.close()
-            # print(lista)
-            # print(file_name)
-            if file_name + '\n' not in lista:
-                print(" \n Descargando fichero: " + file_name + '\n')
-                os.system('mega-get --ignore-quota-warn ' + file_id + ' ./download/' + file_name)
-                print('\nDescomprimiendo en el directorio \'extract\'')
-                #                        title2 = oPath.replace('-',' ')
-                #                        title2 = title2.title()
-                #                        print(title2)
-                os.system('unrar x -u "./download/"' + file_name + ' ./extract/')
-                print('\nBorrando el archivo \'.rar\'')
-                #                        borra = './download/' + title2 + '.rar'
-                #                        os.remove (borra)
-                try:
-                    os.remove('./download/' + file_name)
-                except OSError as e:
-                    print(e)
-                else:
-                    print("File is deleted successfully")
-                with open('3d-load.cfg', 'w') as archivoconfig:
-                    configuracion.write(archivoconfig)
-                listado = open("listado.ini", mode="a", encoding="utf-8")
-                listado.write(file_name + '\n')
+        if configuracion['Sitio.De.Descarga']['mega'] == 'si':
+            for b in browser2.find_elements_by_class_name('shortcode.button.red.large'):
+                alinks = b.get_attribute('href')
+                # print(alinks + '\n')
+                unshortener = UnshortenIt()
+                uri = unshortener.unshorten(alinks)
+                print(uri + '\n')
+                igual = uri.find("=")
+                total = len(uri)
+                file_id = uri[igual + 1:total]
+                #            print("Descargando: ", file_id +'\n\n')
+                o = urlparse(links)
+                #                print(o)
+                #                print (o.path)
+                oPath = o.path
+                #            print("len")
+                #            print(len(oPath))
+                
+                oPath = oPath[:len(oPath) - 1]
+                #            print(oPath)
+                a = 0
+                while a != -1:
+                    a = oPath.find("/")
+                    oPath = oPath[a + 1:len(oPath)]
+                    ocat = o.path[1:len(o.path)]
+                # print(ocat)
+                a = ocat.find("/")
+                #            print(a)
+                file_name = ocat[a + 1:len(ocat) - 1]
+                ocat = ocat[0:a]
+                
+                #            print(ocat)
+                #            print(file_name)
+                #            print(file_id)
+                
+                listado = open('listado.ini', 'r')
+                lista = listado.readlines()
                 listado.close()
-            else:
-                print('si está')
-                ultconf = configuracion['Ult.Descargado']['ult.descargado']
-                if ultconf == file_name:
-                    terminamos = 1
-                    break
+                # print(lista)
+                # print(file_name)
+                if file_name + '\n' not in lista:
+                    print(" \n Descargando fichero: " + file_name + '\n')
+                    os.system('mega-get --ignore-quota-warn ' + file_id + ' ./download/' + file_name)
+                    print('\nDescomprimiendo en el directorio \'extract\'')
+                    #                        title2 = oPath.replace('-',' ')
+                    #                        title2 = title2.title()
+                    #                        print(title2)
+                    if os.path.isfile(file_name):
+                        listado = open("listado.ini", mode="a", encoding="utf-8")
+                        listado.write(file_name + '\n')
+                        listado.close()
+                        os.system('unrar x -u "./download/"' + file_name + ' ./extract/')
+                        print('\nBorrando el archivo \'.rar\'')
+                        #                        borra = './download/' + title2 + '.rar'
+                        #                        os.remove (borra)
+                        try:
+                            os.remove('./download/' + file_name)
+                        except OSError as e:
+                            print(e)
+                        else:
+                            print("File is deleted successfully")
+                    with open('3d-load.cfg', 'w') as archivoconfig:
+                        configuracion.write(archivoconfig)
+                    
+                else:
+                    print('si está')
+                    ultconf = configuracion['Ult.Descargado']['ult.descargado']
+                    if ultconf == file_name:
+                        terminamos = 1
+                        break
+            
+             
     browser.close()
     browser2.close()
     
 
 def main(args):
+    
     pre_carga()
     carga_configuracion()
     page = 0
